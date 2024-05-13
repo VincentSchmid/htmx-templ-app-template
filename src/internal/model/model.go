@@ -48,17 +48,6 @@ func NewAccount(username string, about string, userUuid uuid.UUID) *Account {
 	}
 }
 
-type ServiceProvider struct {
-	BaseModel
-	AccountID int      `bun:"account_id,notnull"`
-	Account   *Account `bun:"rel:has-one,join:account_id=id"`
-}
-
-func (s *ServiceProvider) BeforeAppendModel(ctx context.Context, query bun.Query) error {
-	s.BaseModel.UpdateTimestamps(query)
-	return nil
-}
-
 type Notifcation struct {
 	BaseModel
 	AccountID int    `bun:"account_id,notnull"`
