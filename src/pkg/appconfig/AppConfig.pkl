@@ -1,0 +1,68 @@
+@go.Package { name = "github.com/VincentSchmid/htmx-templ-app-template/pkg/appconfig" }
+module VincentSchmid.AppConfig
+
+import "package://pkg.pkl-lang.org/pkl-go/pkl.golang@0.6.0#/go.pkl" 
+import "AppConfig.pkl"
+
+debug: Boolean
+webserver: Webserver
+database: Database
+session: Session
+supabase: Supabase
+authz: Casbin
+
+class Webserver {
+    port: Int(isBetween(3000, 9999))
+    domainName: String
+    protocol: "https" | "http"
+    fixed host: String = "\(domainName):\(port)"
+    fixed url: String = "\(protocol)://\(domainName):\(port)"
+}
+
+abstract class Database {
+    host: String
+    port: Int
+    user: String
+    password: String
+    dbName: String
+    ssl: Boolean
+    migrationDirectory: String
+    fixed driver: String
+    fixed connectionString: String
+}
+
+class Postgres extends Database {
+    fixed driver = "postgres"
+    fixed connectionString: String = "host=\(host) port=\(port) user=\(user) password=\(password) dbname=\(dbName) sslmode=\(if (ssl) "enable" else "disable")"
+}
+
+class Session {
+    authKey: String
+    encryptionKey: String
+}
+
+class Supabase  {
+    url: String
+    key: String
+}
+
+class Casbin {
+    tableName: String = "casbin_policies"
+    dbDriver: String = "postgres"
+    permissionNames: Permissions
+    resourceByPathRegex: Mapping<String, String>
+    policies: Listing<Policy>
+    defaultPolicies: Listing<Policy>
+    model: String
+}
+
+class Policy {
+    role: String
+    permissions: Mapping<String, String>
+}
+
+class Permissions {
+    reader: String
+    writer: String
+    readerWriter: String
+}

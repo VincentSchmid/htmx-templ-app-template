@@ -1,0 +1,120 @@
+package uiView
+
+import "github.com/VincentSchmid/htmx-templ-app-template/internal/model"
+
+const (
+	homePath            = "/"
+	userSettingsPath    = "/v1/user/settings"
+	userLoginPath       = "/v1/auth/login"
+	userLogoutPath      = "/v1/auth/logout"
+	profilePath         = "/v1/user/profile"
+	clientPath          = "/v1/user/clients"
+	serviceProviderPath = "/v1/user/service-providers"
+)
+
+templ Navigation(user model.AuthenticatedUser) {
+	<div class="navbar bg-base-100">
+		<div class="navbar-start">
+			<div class="dropdown">
+				<div tabindex="0" role="button" class="btn btn-ghost btn-circle">
+					<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"></path></svg>
+				</div>
+				<ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">
+					<li><a href={ clientPath }>Clients</a></li>
+					<li><a href={ serviceProviderPath }>Service Providers</a></li>
+				</ul>
+			</div>
+		</div>
+		<div class="navbar-center">
+			<a href={ homePath } class="btn btn-ghost text-xl">htmx-templ-app-template</a>
+		</div>
+		<div class="navbar-end">
+			<button class="btn btn-ghost btn-circle">
+				<div class="indicator">
+					<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+					<span class="badge badge-xs badge-primary indicator-item"></span>
+				</div>
+			</button>
+			if user.IsLoggedIn {
+				<div class="dropdown dropdown-end">
+					<div tabindex="0" class="btn btn-ghost">{ user.Email }</div>
+					<ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">
+						<li>
+							<a href={ profilePath } class="justify-between">Profile</a>
+						</li>
+						<li><a href={ userSettingsPath }>Settings</a></li>
+						<li><a href="#" hx-post={ userLogoutPath }>Logout</a></li>
+					</ul>
+				</div>
+			} else {
+				<a href={ userLoginPath } class="btn btn-ghost">Sign In</a>
+			}
+		</div>
+	</div>
+}
+
+type TabConfig struct {
+	Title       string
+	TabOrder    []string
+	Tabs        map[string]string
+	SelectedTab string
+	Target      string
+}
+
+templ Tabs(tabConfig TabConfig) {
+	<div class="border-b border-gray-200 pb-5 sm:pb-0 mb-5">
+		<h3 class="text-base font-semibold leading-6 text-accent-content">{ tabConfig.Title }</h3>
+		<div class="mt-3 sm:mt-4">
+			<!-- Dropdown menu on small screens -->
+			<div class="sm:hidden">
+				<select
+					id="current-tab"
+					name="current-tab"
+					onchange="updateTab(this)"
+					hx-target={ tabConfig.Target }
+					hx-target-error="#errors"
+					class="block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
+				>
+					for _, name := range tabConfig.TabOrder {
+						<option value={tabConfig.Tabs[name]} selected?={ name == tabConfig.SelectedTab }>{ name }</option>
+					}
+				</select>
+			</div>
+			<script>
+				function updateTab(selectElement) {
+					const url = selectElement.value;
+					const target = selectElement.getAttribute('hx-target');
+
+					htmx.ajax('GET', url, {
+						target: target
+					});
+				}
+			</script>
+			<!-- Tabs at small breakpoint and up -->
+			<div class="hidden sm:block">
+				<nav class="-mb-px flex space-x-8">
+					for _, name := range tabConfig.TabOrder {
+						if name == tabConfig.SelectedTab {
+							<a
+								hx-get={ tabConfig.Tabs[name] }
+								hx-target={ tabConfig.Target }
+								hx-target-error="#errors"
+								class="border-primary text-primary whitespace-nowrap border-b-2 px-1 pb-4 text-sm font-medium"
+								aria-current="page"
+							>{ name }</a>
+						} else {
+							<a
+								hx-get={ tabConfig.Tabs[name] }
+								hx-target={ tabConfig.Target }
+								hx-target-error="#errors"
+								class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 whitespace-nowrap border-b-2 px-1 pb-4 text-sm font-medium"
+							>{ name }</a>
+						}
+					}
+					<!-- Current: "border-indigo-500 text-indigo-600", Default: "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700" -->
+				</nav>
+			</div>
+		</div>
+	</div>
+	<div id="errors"></div>
+}

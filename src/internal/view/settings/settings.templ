@@ -1,0 +1,10 @@
+package settingsView
+
+import "github.com/VincentSchmid/htmx-templ-app-template/internal/view/layout"
+import "github.com/VincentSchmid/htmx-templ-app-template/internal/model"
+
+templ Index(user model.AuthenticatedUser) {
+    @layout.App(true) {
+        <div>Hello {user.Email}</div>
+    }
+}

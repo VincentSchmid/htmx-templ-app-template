@@ -1,0 +1,43 @@
+import "../pkg/appconfig/AppConfig.pkl"
+import "casbin.pkl"
+
+userPolicy = new AppConfig.Policy {
+    role = "user"
+    permissions = new Mapping {
+    }
+}
+
+permissionNames = new AppConfig.Permissions {
+    reader = "GET"
+    writer = "^(POST|PUT|DELETE)$"
+    readerWriter = "^(GET|POST|PUT|DELETE)$"
+}
+
+config = new AppConfig.Casbin {
+    tableName = "casbin_policies"
+    dbDriver = "postgres"
+    model = read("file:config/rbac_model.conf").text
+    permissionNames = casbin.permissionNames
+    resourceByPathRegex = new Mapping {
+    }.toMap()
+     .mapKeys((key, value) -> key.replaceAll("{uuid}", "([a-fA-F0-9-]{36})"))
+     .mapKeys((key, value) -> key.replaceAll("*", "[^0-9]*"))
+     .mapKeys((key, value) -> "^" + key + "$")
+     .toMapping()
+    policies = new Listing{
+        userPolicy
+        new AppConfig.Policy {
+            role = "serviceProvider:{uuid}"
+            permissions = new Mapping {
+            }
+        }
+        new AppConfig.Policy {
+            role = "client:{uuid}"
+            permissions = new Mapping {
+            }
+        }
+    }
+    defaultPolicies = new Listing {
+        userPolicy
+    }
+}

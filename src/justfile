@@ -1,0 +1,80 @@
+env := "dev"
+config_file := "config/" + env + ".pkl"
+
+test:
+    go test ./internal/...
+
+# Format the source code
+format:
+    gofmt -s -w .
+
+# Run the linter
+lint:
+    golangci-lint run --build-tags {{env}}
+
+# Generate the go code from the pkl definition
+config:
+    pkl-gen-go pkg/appconfig/AppConfig.pkl
+
+# Check the pkl config
+eval:
+    pkl eval {{config_file}} > /dev/null
+
+# check pkl config, genereate pkl go code, format go code, run linter
+validate: eval config format lint
+
+# Start the webserver
+run: validate
+    tailwindcss -i internal/view/css/app.css -o public/styles.css
+    templ generate
+    go run -tags {{env}} . server --config-file {{config_file}}
+
+# Build the binary
+build: validate
+    tailwindcss -i internal/view/css/app.css -o public/styles.css
+    templ generate
+    go build -tags dev -o bin/htmx-templ-app-template .
+
+release: validate
+    tailwindcss -i internal/view/css/app.css -o public/styles.css
+    templ generate
+    go build -ldflags "-s -w" -trimpath -tags prod -o bin/htmx-templ-app-template .
+
+# generate the templ files (params: --proxy=http://localhost:300)
+templ *params:
+    templ generate -watch {{ params }}
+
+# generate the tailwind css
+tailwind:
+    tailwindcss -i internal/view/css/app.css -o public/styles.css --watch
+
+# kill running servers
+kill:
+    sudo lsof -i tcp:3000 | grep LISTEN | awk '{print $2}' | xargs kill -9
+
+# run migrate command (up, down, force)
+migrate *command:
+    go run -tags dev . migrate {{command}} --config-file {{config_file}} 
+
+# run the migration up
+up:
+    just migrate up --config-file {{config_file}}
+
+# run the migration down
+down:
+    just migrate down --config-file {{config_file}}
+
+force version:
+    just migrate force --version {{version}} --config-file {{config_file}}
+
+# delete the tables and migrate up
+reset: && up
+    go run -tags dev . migrate drop --config-file {{config_file}}
+
+# create a new migration (name: name of migration)
+migration name: 
+    migrate create -ext sql -dir cmd/migrate/migrations {{name}}
+
+# generate new session keys
+keys:
+    go run -tags dev . generate-keys --config-file {{config_file}}

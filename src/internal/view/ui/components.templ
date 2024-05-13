@@ -1,0 +1,168 @@
+package uiView
+
+import "github.com/VincentSchmid/htmx-templ-app-template/internal/dto"
+
+const (
+	FieldTypeText     = "text"
+	FieldTypeEmail    = "email"
+	FieldTypePassword = "password"
+)
+
+type FormSectionData struct {
+	Title       string
+	Description string
+	Endpoint    string
+	SaveButton  bool
+}
+
+templ ContianedFormSection(data FormSectionData) {
+	<form
+		hx-put={ data.Endpoint }
+		hx-swap="outerHTML"
+	>
+		@FormSection(data) {
+			{ children... }
+		}
+	</form>
+}
+
+templ FormSection(data FormSectionData) {
+	<div class="space-y-12">
+		<div class="grid grid-cols-1 gap-x-8 gap-y-10 pb-4 md:grid-cols-3">
+			<div>
+				<h2 class="text-base font-semibold leading-7 text-base-content">{ data.Title }</h2>
+				<p class="mt-1 text-sm leading-6 text-base-content">{ data.Description }</p>
+			</div>
+			<div class="grid max-w-2xl grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6 md:col-span-2">
+			{ children... }
+			</div>
+		</div>
+		if data.SaveButton {
+			<div class="mt-6 flex items-center justify-end gap-x-6">
+				<button type="submit" class="btn btn-primary">Save</button>
+			</div>
+		}
+	</div>
+	<div class="divider"></div>
+}
+
+templ InputField(name string, id string, fieldType string, value string, errors string, required bool) {
+	<div class="sm:col-span-4">
+		<div class="label">
+			<span class="label-text font-semibold">{ name }</span>
+		</div>
+		<div class="mt-2">
+			<input
+				value={ value }
+				id={ id }
+				name={ id }
+				type={ fieldType }
+				class="block w-full input input-bordered"
+				if required {
+					required
+				}
+			/>
+		</div>
+		if len(errors) > 0 {
+			<div class="label">
+				<span class="label-text-alt text-error">{ errors }</span>
+			</div>
+		}
+	</div>
+}
+
+templ TextField(name string, id string, value string, errors string, required bool) {
+	<div class="col-span-full">
+		<div class="label">
+			<span class="label-text font-semibold">About</span>
+		</div>
+		<div class="mt-2">
+			<textarea
+				id={ id }
+				name={ id }
+				type="text"
+				rows="3"
+				class="block w-full textarea textarea-bordered"
+				if required {
+					required
+				}
+			>
+				{ value }
+			</textarea>
+		</div>
+		if len(errors) > 0 {
+			<div class="label">
+				<span class="label-text-alt text-error">{ errors }</span>
+			</div>
+		} else {
+			<p class="mt-3 text-sm leading-6 text-base-content">Write a few sentences about yourself.</p>
+		}
+	</div>
+}
+
+templ ErrorLabel(errors string) {
+	<div class="label">
+		<span class="label-text-alt text-error">{ errors }</span>
+	</div>
+}
+
+templ SingleForm(title string, formFooter templ.Component) {
+	<div class="flex min-h-full flex-col justify-center py-12 sm:px-6 lg:px-8">
+		<div class="sm:mx-auto sm:w-full sm:max-w-md">
+			<h2 class="mt-6 text-center text-2xl font-bold leading-9 tracking-tight font-black">{ title }</h2>
+		</div>
+		<div class="mt-10 sm:mx-auto sm:w-full sm:max-w-[480px]">
+			<div class="bg-base-300 px-6 py-12 shadow sm:rounded-lg sm:px-12">
+				{ children... }
+			</div>
+			@formFooter
+		</div>
+	</div>
+}
+
+templ CardList() {
+	<div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+		<!-- We've used 3xl here, but feel free to try other max-widths based on your needs -->
+		<div class="mx-auto max-w-3xl">
+			<ul role="list" class="space-y-3">
+				{ children... }
+			</ul>
+		</div>
+	</div>
+}
+
+type EmptyStateData struct {
+	Title       string
+	Description string
+	ButtonTitle string
+	RedirectUrl string
+}
+
+templ EmptyState(emptyState EmptyStateData) {
+	<div class="text-center">
+		<h3 class="mt-2 text-sm font-semibold text-base-content">{ emptyState.Title }</h3>
+		<p class="mt-1 text-sm text-neutral-content">{ emptyState.Description }</p>
+		if emptyState.ButtonTitle != "" {
+			<div class="mt-6">
+				<button hx-get={ emptyState.RedirectUrl } class="btn btn-active btn-primary">{ emptyState.ButtonTitle }</button>
+			</div>
+		}
+	</div>
+}
+
+templ ReadOnlyCopyField(name string, value string) {
+	<div class="label">
+		<span class="label-text font-semibold">{ name }</span>
+	</div>
+	<div class="relative mb-4">
+		<input id="account-id" type="text" class="block w-full input input-bordered" value={ value } disabled readonly/>
+	</div>
+}
+
+templ PageHeading(title string) {
+	<div class=" mb-6 md:flex md:items-center md:justify-between">
+		<div class="min-w-0 flex-1">
+			<h2 class="text-2xl font-bold leading-7 text-content sm:truncate sm:text-3xl sm:tracking-tight">{title}</h2>
+		</div>
+	</div>
+}
